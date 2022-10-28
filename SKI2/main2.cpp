@@ -32,12 +32,10 @@ int main(int argc, char *argv[])
 
     double matrix[n];
 
-    double t1, t, Time;
+    double t1, t, t2 = 0.0, Time;
 
-    srand(1);
-
-    t1 = MPI_Wtime();
-
+    srand(14251);
+	
     do
     {
         if(nrank == 0)
@@ -57,7 +55,9 @@ int main(int argc, char *argv[])
         if(nrank != 0)
         {
             MPI_Recv(buf, n, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-
+			
+			t1 = MPI_Wtime();
+			
             if(status.MPI_TAG == DIETAG)
             {
                 break;
@@ -72,8 +72,11 @@ int main(int argc, char *argv[])
                     result += sqrt(buf[i] * buf[i] + buf[i + 1] * buf[i + 1]) * V;
                 }
             }
+			
+			t = MPI_Wtime() - t1;
+			t2 += t;
         }
-
+		
         MPI_Reduce(&result, &cur_solution_result, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
         if(nrank == 0)
@@ -91,10 +94,8 @@ int main(int argc, char *argv[])
         }
     }
     while(true);
-
-    t = MPI_Wtime() - t1;
-
-    MPI_Reduce(&t, &Time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+	
+    MPI_Reduce(&t2, &Time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
     if(nrank == 0)
     {
